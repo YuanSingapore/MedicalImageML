@@ -93,11 +93,49 @@ def train(current_host, training_channel, testing_channel, hyperparameters, host
     # Extract compressed image / mask pairs locally
     for train_tar in train_tars:
         with tarfile.open(os.path.join(train_dir, train_tar), 'r:gz') as f:
-            f.extractall(train_dir)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(f, train_dir)
     print("extracted all the files for training!")
     for validation_tar in validation_tars:
         with tarfile.open(os.path.join(validation_dir, validation_tar), 'r:gz') as f:
-            f.extractall(validation_dir)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(f, validation_dir)
     print("extracted all the files for validation!")
     # Define custom iterators on extracted data locations.
     train_iter = DataLoaderIter(
